@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guia Parseur — Extrato Itaú</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #141720;
+    --surface2: #1c2030;
+    --border: #2a2f42;
+    --itau: #EC7000;
+    --itau-dim: #7a3a00;
+    --blue: #4C8BF5;
+    --blue-dim: #1a3566;
+    --green: #2ECC71;
+    --green-dim: #0f4a25;
+    --yellow: #F4C542;
+    --yellow-dim: #4a3a00;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --accent: #EC7000;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    padding: 48px 40px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+  }
+
+  .logo-badge {
+    width: 52px; height: 52px;
+    background: var(--itau);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    color: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 0 32px rgba(236,112,0,0.35);
+  }
+
+  .header-text h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 26px;
+    color: #fff;
+    line-height: 1.2;
+  }
+
+  .header-text p {
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+
+  .header-tags {
+    display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+  }
+
+  .tag {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    border: 1px solid;
+  }
+  .tag-orange { color: var(--itau); border-color: var(--itau-dim); background: rgba(236,112,0,0.08); }
+  .tag-blue   { color: var(--blue); border-color: var(--blue-dim); background: rgba(76,139,245,0.08); }
+  .tag-green  { color: var(--green); border-color: var(--green-dim); background: rgba(46,204,113,0.08); }
+
+  /* ─── LAYOUT ─── */
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 40px 40px 80px;
+  }
+
+  /* ─── FLOW DIAGRAM ─── */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 40px 0;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .flow-node {
+    flex-shrink: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    text-align: center;
+    min-width: 110px;
+  }
+
+  .flow-node .icon {
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+
+  .flow-node .label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .flow-node .sublabel {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .flow-node.highlight {
+    border-color: var(--itau);
+    background: rgba(236,112,0,0.07);
+  }
+
+  .flow-arrow {
+    font-size: 18px;
+    color: var(--muted);
+    padding: 0 8px;
+    flex-shrink: 0;
+  }
+
+  /* ─── STEPS ─── */
+  .step {
+    margin-bottom: 32px;
+    opacity: 0;
+    transform: translateY(16px);
+    animation: fadeUp 0.4s forwards;
+  }
+
+  .step:nth-child(1) { animation-delay: 0.05s; }
+  .step:nth-child(2) { animation-delay: 0.1s; }
+  .step:nth-child(3) { animation-delay: 0.15s; }
+  .step:nth-child(4) { animation-delay: 0.2s; }
+  .step:nth-child(5) { animation-delay: 0.25s; }
+  .step:nth-child(6) { animation-delay: 0.3s; }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .step-num {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+
+  .step-num.orange { background: rgba(236,112,0,0.15); color: var(--itau); border: 1px solid var(--itau-dim); }
+  .step-num.blue   { background: rgba(76,139,245,0.15); color: var(--blue);  border: 1px solid var(--blue-dim); }
+  .step-num.green  { background: rgba(46,204,113,0.15); color: var(--green); border: 1px solid var(--green-dim); }
+  .step-num.yellow { background: rgba(244,197,66,0.15); color: var(--yellow);border: 1px solid var(--yellow-dim); }
+
+  .step-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    color: #fff;
+    flex: 1;
+  }
+
+  .step-chevron {
+    color: var(--muted);
+    font-size: 18px;
+    transition: transform 0.25s;
+  }
+
+  .step-body {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    display: block;
+  }
+
+  .step-body.collapsed {
+    display: none;
+  }
+
+  .step-header.open .step-chevron {
+    transform: rotate(180deg);
+  }
+
+  /* ─── INNER ELEMENTS ─── */
+  .action-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .action-list li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 14px;
+  }
+
+  .action-list li .bullet {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .bullet-orange { background: rgba(236,112,0,0.2); color: var(--itau); }
+  .bullet-blue   { background: rgba(76,139,245,0.2); color: var(--blue); }
+  .bullet-green  { background: rgba(46,204,113,0.2); color: var(--green); }
+  .bullet-yellow { background: rgba(244,197,66,0.2); color: var(--yellow); }
+
+  .action-list li strong {
+    color: #fff;
+    font-weight: 500;
+  }
+
+  .code-block {
+    background: #0a0c10;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--itau);
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin: 14px 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: #c9d1d9;
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  .code-block .comment { color: #6b7280; }
+  .code-block .key { color: var(--blue); }
+  .code-block .val { color: var(--green); }
+  .code-block .str { color: var(--yellow); }
+
+  /* ─── FIELDS TABLE ─── */
+  .fields-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 14px;
+    font-size: 13px;
+  }
+
+  .fields-table th {
+    background: var(--surface2);
+    color: var(--muted);
+    font-weight: 500;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .fields-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  .fields-table tr:last-child td { border-bottom: none; }
+
+  .fields-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .field-name {
+    font-family: 'DM Mono', monospace;
+    color: var(--blue);
+    font-size: 13px;
+  }
+
+  .field-col {
+    font-family: 'DM Mono', monospace;
+    color: var(--itau);
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .field-desc { color: var(--muted); font-size: 13px; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+  }
+  .badge-ia  { background: rgba(76,139,245,0.15); color: var(--blue); }
+  .badge-obg { background: rgba(236,112,0,0.15); color: var(--itau); }
+  .badge-opt { background: rgba(107,114,128,0.2); color: var(--muted); }
+
+  /* ─── TIP BOX ─── */
+  .tip {
+    display: flex;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    margin-top: 16px;
+    font-size: 13.5px;
+  }
+  .tip-yellow { background: rgba(244,197,66,0.07); border: 1px solid rgba(244,197,66,0.2); }
+  .tip-blue   { background: rgba(76,139,245,0.07); border: 1px solid rgba(76,139,245,0.2); }
+  .tip-green  { background: rgba(46,204,113,0.07); border: 1px solid rgba(46,204,113,0.2); }
+
+  .tip-icon { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+  .tip-yellow .tip-icon { color: var(--yellow); }
+  .tip-blue   .tip-icon { color: var(--blue); }
+  .tip-green  .tip-icon { color: var(--green); }
+
+  /* ─── MAPPING ─── */
+  .mapping-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border: 1px solid var(--border);
+    font-size: 13.5px;
+  }
+
+  .map-from {
+    font-family: 'DM Mono', monospace;
+    color: var(--blue);
+    min-width: 100px;
+  }
+
+  .map-arrow {
+    color: var(--muted);
+    font-size: 16px;
+  }
+
+  .map-to {
+    font-family: 'DM Mono', monospace;
+    color: var(--itau);
+    min-width: 80px;
+  }
+
+  .map-desc {
+    color: var(--muted);
+    font-size: 12px;
+    margin-left: auto;
+  }
+
+  /* ─── DIVIDER ─── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 28px 0;
+  }
+
+  /* ─── PROGRESS BAR ─── */
+  .progress-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 40px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .progress-seg {
+    height: 3px;
+    flex: 1;
+    border-radius: 2px;
+    background: var(--border);
+    transition: background 0.3s;
+  }
+  .progress-seg.done { background: var(--itau); }
+  .progress-label {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    white-space: nowrap;
+  }
+
+  /* ─── SECTION LABEL ─── */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 20px;
+    margin-top: 40px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-badge">P</div>
+  <div class="header-text">
+    <h1>Guia de Configuração — Parseur × Itaú</h1>
+    <p>Extração automática de extrato bancário → Planilha de Fluxo de Caixa</p>
+    <div class="header-tags">
+      <span class="tag tag-orange">Extrato Itaú PDF</span>
+      <span class="tag tag-blue">Parseur IA</span>
+      <span class="tag tag-green">Google Planilhas / Excel</span>
+    </div>
+  </div>
+</header>
+
+<div class="progress-bar" id="progressBar">
+  <span class="progress-label">Passo</span>
+  <div class="progress-seg" id="seg1"></div>
+  <div class="progress-seg" id="seg2"></div>
+  <div class="progress-seg" id="seg3"></div>
+  <div class="progress-seg" id="seg4"></div>
+  <div class="progress-seg" id="seg5"></div>
+  <div class="progress-seg" id="seg6"></div>
+  <span class="progress-label" id="stepCounter">0 / 6</span>
+</div>
+
+<div class="container">
+
+  <!-- FLUXO -->
+  <div class="flow">
+    <div class="flow-node highlight">
+      <div class="icon">📄</div>
+      <div class="label">PDF Itaú</div>
+      <div class="sublabel">Extrato mensal</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node highlight">
+      <div class="icon">📬</div>
+      <div class="label">Parseur</div>
+      <div class="sublabel">Caixa de correio</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node highlight">
+      <div class="icon">🤖</div>
+      <div class="label">IA Extrai</div>
+      <div class="sublabel">3 campos</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node highlight">
+      <div class="icon">🔗</div>
+      <div class="label">Integração</div>
+      <div class="sublabel">Zapier / API</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node highlight">
+      <div class="icon">📊</div>
+      <div class="label">Planilha</div>
+      <div class="sublabel">02.2026</div>
+    </div>
+  </div>
+
+  <div class="section-label">Passo a passo da configuração</div>
+
+  <!-- ── STEP 1 ── -->
+  <div class="step" id="step1">
+    <div class="step-header open" onclick="toggle(this, 'body1', 'seg1')">
+      <div class="step-num orange">1</div>
+      <div class="step-title">Criar conta e nova Caixa de Correio</div>
+      <div class="step-chevron">▼</div>
+    </div>
+    <div class="step-body" id="body1">
+      <ul class="action-list">
+        <li>
+          <div class="bullet bullet-orange">→</div>
+          <div>Acesse <strong>app.parseur.com/signup</strong> e crie sua conta gratuita (20 páginas/mês — suficiente para testes)</div>
+        </li>
+        <li>
+          <div class="bullet bullet-orange">→</div>
+          <div>No painel, clique em <strong>"+ Nova Caixa de Correio"</strong></div>
+        </li>
+        <li>
+          <div class="bullet bullet-orange">→</div>
+          <div>Em "Tipo de documento", selecione <strong>PDF</strong></div>
+        </li>
+        <li>
+          <div class="bullet bullet-orange">→</div>
+          <div>Nomeie a caixa: <strong>Extrato Itaú — [Nome do Cliente]</strong></div>
+        </li>
+        <li>
+          <div class="bullet bullet-orange">→</div>
+          <div>Em "Mecanismo de análise", escolha <strong>IA (Inteligência Artificial)</strong> — ideal para extratos que mudam de layout mês a mês</div>
+        </li>
+      </ul>
+      <div class="tip tip-yellow">
+        <span class="tip-icon">⚠</span>
+        <span>Crie <strong>uma caixa por banco</strong>. Se a consultora tiver clientes no Itaú e Bradesco, crie caixas separadas — cada banco tem um layout diferente.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STEP 2 ── -->
+  <div class="step" id="step2">
+    <div class="step-header" onclick="toggle(this, 'body2', 'seg2')">
+      <div class="step-num blue">2</div>
+      <div class="step-title">Fazer upload do primeiro extrato (treino da IA)</div>
+      <div class="step-chevron">▼</div>
+    </div>
+    <div class="step-body collapsed" id="body2">
+      <ul class="action-list">
+        <li>
+          <div class="bullet bullet-blue">→</div>
+          <div>Na caixa criada, clique em <strong>"Enviar documento de teste"</strong> e faça upload do PDF <code>itau_extrato_012026.pdf</code></div>
+        </li>
+        <li>
+          <div class="bullet bullet-blue">→</div>
+          <div>O Parseur vai renderizar o PDF e aguardar você definir os campos a extrair</div>
+        </li>
+        <li>
+          <div class="bullet bullet-blue">→</div>
+          <div>Aguarde o processamento OCR (geralmente &lt; 30 segundos para um extrato de 5 páginas)</div>
+        </li>
+      </ul>
+      <div class="tip tip-blue">
+        <span class="tip-icon">ℹ</span>
+        <span>Use um extrato <strong>completo e real</strong> para treinar — quanto mais lançamentos, melhor a IA aprende o padrão do Itaú.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STEP 3 ── -->
+  <div class="step" id="step3">
+    <div class="step-header" onclick="toggle(this, 'body3', 'seg3')">
+      <div class="step-num orange">3</div>
+      <div class="step-title">Configurar os campos de extração</div>
+      <div class="step-chevron">▼</div>
+    </div>
+    <div class="step-body collapsed" id="body3">
+      <p style="color:var(--muted); font-size:14px; margin-bottom:16px;">
+        Você vai criar <strong>3 campos</strong> que correspondem exatamente às colunas da planilha da consultora:
+      </p>
+
+      <table class="fields-table">
+        <thead>
+          <tr>
+            <th>Nome do Campo</th>
+            <th>Coluna na Planilha</th>
+            <th>Instrução para a IA</th>
+            <th>Tipo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="field-name">data</span></td>
+            <td><span class="field-col">B — Data</span></td>
+            <td class="field-desc">Data de cada lançamento no formato DD/MM/AAAA. Ignora as linhas "SALDO DO DIA".</td>
+            <td><span class="badge badge-obg">Obrigatório</span></td>
+          </tr>
+          <tr>
+            <td><span class="field-name">descricao</span></td>
+            <td><span class="field-col">M — Histórico</span></td>
+            <td class="field-desc">Texto descritivo do lançamento. Ex: "PIX QRS UBER DO BRA25/02", "TED 104.0000CAIXA ECON F".</td>
+            <td><span class="badge badge-obg">Obrigatório</span></td>
+          </tr>
+          <tr>
+            <td><span class="field-name">valor_itau</span></td>
+            <td><span class="field-col">F — Itaú</span></td>
+            <td class="field-desc">Valor numérico do lançamento. Negativo para débitos, positivo para créditos. Formato: número com 2 casas decimais.</td>
+            <td><span class="badge badge-obg">Obrigatório</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <hr class="divider">
+
+      <p style="color: var(--text); font-weight: 500; margin-bottom: 12px;">Como criar cada campo no Parseur (modo IA):</p>
+      <ul class="action-list">
+        <li>
+          <div class="bullet bullet-orange">1</div>
+          <div>Clique em <strong>"+ Adicionar Campo"</strong> na barra lateral direita</div>
+        </li>
+        <li>
+          <div class="bullet bullet-orange">2</div>
+          <div>Em "Nome do campo", digite: <code>data</code></div>
+        </li>
+        <li>
+          <div class="bullet bullet-orange">3</div>
+          <div>Em "Descrição / Instrução para a IA", cole o texto abaixo:</div>
+        </li>
+      </ul>
+
+      <div class="code-block"><span class="comment">// Campo: data</span>
+<span class="str">Extraia a data de cada linha de lançamento financeiro da tabela do extrato bancário Itaú.
+O formato original é DD/MM/AAAA. Ignore as linhas que contêm "SALDO DO DIA".
+Retorne como lista — um valor por lançamento.</span></div>
+
+      <div class="code-block"><span class="comment">// Campo: descricao</span>
+<span class="str">Extraia a descrição/histórico de cada lançamento financeiro do extrato bancário Itaú.
+É o texto na coluna "lançamentos". Ignore as linhas "SALDO DO DIA".
+Exemplos: "PIX TRANSF Paulo D26/02", "TED 104.0000CAIXA ECON F", "RESGATE CDB Cofrinhos".</span></div>
+
+      <div class="code-block"><span class="comment">// Campo: valor_itau</span>
+<span class="str">Extraia o valor numérico de cada lançamento financeiro do extrato bancário Itaú.
+É o número na coluna "valor (R$)". Débitos são negativos (ex: -10,00), créditos são positivos (ex: 2519,00).
+Ignore as linhas "SALDO DO DIA". Retorne como número com 2 casas decimais.</span></div>
+
+      <div class="tip tip-green">
+        <span class="tip-icon">✓</span>
+        <span>Após criar os campos, clique em <strong>"Testar extração"</strong>. O Parseur vai rodar a IA no PDF de teste e mostrar os valores extraídos para cada campo. Valide se os 3 campos estão corretos antes de avançar.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STEP 4 ── -->
+  <div class="step" id="step4">
+    <div class="step-header" onclick="toggle(this, 'body4', 'seg4')">
+      <div class="step-num green">4</div>
+      <div class="step-title">Validar e ajustar a extração</div>
+      <div class="step-chevron">▼</div>
+    </div>
+    <div class="step-body collapsed" id="body4">
+      <p style="color:var(--muted); font-size:14px; margin-bottom:16px;">
+        Após o teste, confira se a IA extraiu corretamente. Pontos de atenção específicos para o extrato Itaú:
+      </p>
+      <ul class="action-list">
+        <li>
+          <div class="bullet bullet-green">✓</div>
+          <div><strong>Lançamentos duplicados de data</strong> — vários lançamentos no mesmo dia (ex: 25/02) devem aparecer como linhas separadas, não agrupados</div>
+        </li>
+        <li>
+          <div class="bullet bullet-green">✓</div>
+          <div><strong>Sinal do valor</strong> — débitos devem ser negativos (ex: <code>-800.00</code>) e créditos positivos (ex: <code>151.02</code>)</div>
+        </li>
+        <li>
+          <div class="bullet bullet-green">✓</div>
+          <div><strong>Linhas "SALDO DO DIA" excluídas</strong> — essas linhas não são lançamentos e não devem aparecer nos dados extraídos</div>
+        </li>
+        <li>
+          <div class="bullet bullet-green">✓</div>
+          <div><strong>Lançamentos de múltiplas páginas</strong> — o extrato tem 4 páginas de dados; verifique se todos os lançamentos foram capturados, incluindo os de janeiro (27-31/01)</div>
+        </li>
+        <li>
+          <div class="bullet bullet-green">✓</div>
+          <div><strong>Formatação decimal</strong> — o Parseur deve converter <code>-10,00</code> para <code>-10.00</code> automaticamente</div>
+        </li>
+      </ul>
+      <div class="tip tip-yellow">
+        <span class="tip-icon">⚠</span>
+        <span>Se algum campo estiver incorreto, edite a "Instrução para a IA" e re-teste. Você pode iterar quantas vezes precisar antes de conectar a planilha.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STEP 5 ── -->
+  <div class="step" id="step5">
+    <div class="step-header" onclick="toggle(this, 'body5', 'seg5')">
+      <div class="step-num blue">5</div>
+      <div class="step-title">Conectar com a planilha (Google Planilhas ou Excel)</div>
+      <div class="step-chevron">▼</div>
+    </div>
+    <div class="step-body collapsed" id="body5">
+      <p style="color:var(--muted); font-size:14px; margin-bottom:16px;">
+        O Parseur se integra nativamente ao Google Planilhas. Para Excel, use via Zapier ou exportação automática.
+      </p>
+
+      <p style="color: var(--text); font-weight: 500; margin-bottom: 12px;">Opção A — Google Planilhas (recomendado):</p>
+      <ul class="action-list">
+        <li>
+          <div class="bullet bullet-blue">1</div>
+          <div>No Parseur, vá em <strong>Integrações → Google Planilhas</strong></div>
+        </li>
+        <li>
+          <div class="bullet bullet-blue">2</div>
+          <div>Conecte sua conta Google e selecione a planilha <strong>"Fluxo de Caixa 2026"</strong></div>
+        </li>
+        <li>
+          <div class="bullet bullet-blue">3</div>
+          <div>Selecione a aba <strong>"02.2026"</strong> (ou a aba do mês correspondente)</div>
+        </li>
+        <li>
+          <div class="bullet bullet-blue">4</div>
+          <div>Mapeie os campos conforme abaixo:</div>
+        </li>
+      </ul>
+
+      <div style="margin: 16px 0;">
+        <div class="mapping-row">
+          <span class="map-from">data</span>
+          <span class="map-arrow">→</span>
+          <span class="map-to">Coluna B</span>
+          <span class="map-desc">Data do lançamento</span>
+        </div>
+        <div class="mapping-row">
+          <span class="map-from">descricao</span>
+          <span class="map-arrow">→</span>
+          <span class="map-to">Coluna M</span>
+          <span class="map-desc">Histórico (Opcional)</span>
+        </div>
+        <div class="mapping-row">
+          <span class="map-from">valor_itau</span>
+          <span class="map-arrow">→</span>
+          <span class="map-to">Coluna F</span>
+          <span class="map-desc">Itaú (valor R$)</span>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <p style="color: var(--text); font-weight: 500; margin-bottom: 12px;">Opção B — Zapier (para Excel / OneDrive):</p>
+      <ul class="action-list">
+        <li>
+          <div class="bullet bullet-blue">1</div>
+          <div><strong>Trigger:</strong> "Parseur — New Parsed Document"</div>
+        </li>
+        <li>
+          <div class="bullet bullet-blue">2</div>
+          <div><strong>Action:</strong> "Microsoft Excel — Add Row to Table" (ou Google Sheets — Append Row)</div>
+        </li>
+        <li>
+          <div class="bullet bullet-blue">3</div>
+          <div>Mapeie os 3 campos nas colunas B, F e M</div>
+        </li>
+      </ul>
+
+      <div class="tip tip-blue">
+        <span class="tip-icon">ℹ</span>
+        <span>Com o Google Planilhas nativo, não precisa do Zapier — é gratuito e direto. O Zapier só é necessário se a planilha estiver no OneDrive/SharePoint.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STEP 6 ── -->
+  <div class="step" id="step6">
+    <div class="step-header" onclick="toggle(this, 'body6', 'seg6')">
+      <div class="step-num green">6</div>
+      <div class="step-title">Automatizar o envio mensal dos extratos</div>
+      <div class="step-chevron">▼</div>
+    </div>
+    <div class="step-body collapsed" id="body6">
+      <p style="color:var(--muted); font-size:14px; margin-bottom:16px;">
+        Existem 3 formas de enviar o extrato ao Parseur. Escolha a mais prática para o fluxo da consultoria:
+      </p>
+      <ul class="action-list">
+        <li>
+          <div class="bullet bullet-green">A</div>
+          <div>
+            <strong>E-mail (mais simples)</strong><br>
+            <span style="color:var(--muted); font-size:13px;">Cada caixa do Parseur tem um endereço de e-mail único. Basta encaminhar o extrato PDF (baixado do app Itaú) para esse e-mail — processamento automático.</span>
+          </div>
+        </li>
+        <li>
+          <div class="bullet bullet-green">B</div>
+          <div>
+            <strong>Upload manual no painel</strong><br>
+            <span style="color:var(--muted); font-size:13px;">Faça login no Parseur e arraste o PDF para a caixa. Bom para revisão antes de enviar para a planilha.</span>
+          </div>
+        </li>
+        <li>
+          <div class="bullet bullet-green">C</div>
+          <div>
+            <strong>API (para automação total)</strong><br>
+            <span style="color:var(--muted); font-size:13px;">Se a consultoria tiver um sistema interno, é possível enviar o PDF via API REST do Parseur e receber os dados extraídos em JSON.</span>
+          </div>
+        </li>
+      </ul>
+
+      <div class="code-block"><span class="comment"># Exemplo: envio via API (curl)</span>
+<span class="key">curl</span> -X POST https://api.parseur.com/v1/documents \
+  -H <span class="str">"Authorization: Token SEU_TOKEN_AQUI"</span> \
+  -F <span class="str">"mailbox_id=ID_DA_SUA_CAIXA"</span> \
+  -F <span class="str">"file=@itau_extrato_022026.pdf"</span></div>
+
+      <hr class="divider">
+
+      <p style="color: var(--text); font-weight: 500; margin-bottom: 12px;">Dica: aba dinâmica por mês</p>
+      <p style="color: var(--muted); font-size: 13.5px; margin-bottom: 12px;">
+        Para que o Parseur envie para a aba correta (02.2026, 03.2026...) automaticamente, use o Zapier com lógica condicional:
+      </p>
+      <ul class="action-list">
+        <li>
+          <div class="bullet bullet-green">→</div>
+          <div>No Parseur, adicione um campo extra chamado <strong>mes_referencia</strong> com instrução: <em>"Extraia o mês de referência do extrato no formato MM.AAAA"</em></div>
+        </li>
+        <li>
+          <div class="bullet bullet-green">→</div>
+          <div>No Zapier, use o valor de <strong>mes_referencia</strong> para selecionar dinamicamente a aba da planilha</div>
+        </li>
+      </ul>
+
+      <div class="tip tip-green">
+        <span class="tip-icon">✓</span>
+        <span>Com essa configuração completa, o fluxo mensal se torna: baixar o extrato PDF no app Itaú → encaminhar para o e-mail do Parseur → dados aparecem automaticamente na aba correta da planilha da consultora.</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function toggle(header, bodyId, segId) {
+  const body = document.getElementById(bodyId);
+  const seg  = document.getElementById(segId);
+  const isOpen = header.classList.contains('open');
+
+  if (isOpen) {
+    header.classList.remove('open');
+    body.classList.add('collapsed');
+    seg.classList.remove('done');
+  } else {
+    header.classList.add('open');
+    body.classList.remove('collapsed');
+    seg.classList.add('done');
+  }
+  updateCounter();
+}
+
+function updateCounter() {
+  const done = document.querySelectorAll('.progress-seg.done').length;
+  document.getElementById('stepCounter').textContent = done + ' / 6';
+}
+</script>
+</body>
+</html>
