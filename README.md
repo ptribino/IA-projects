@@ -1,2 +1,2 @@
 # guia-parseur-itau
-Projetos estudo IA
+Extração automática de extratos
